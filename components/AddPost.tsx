@@ -36,6 +36,38 @@ function nowTimeValue() {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+// Downscale + re-encode photos in the browser before upload. A 12 MB phone
+// shot becomes ~0.5-1 MB with no visible quality loss on screen, so uploads
+// are far faster and storage lasts much longer. Falls back to the original
+// file if anything can't be processed (e.g. animated GIFs, undecodable HEIC).
+async function compressImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const maxEdge = 2000;
+    const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+    const width = Math.round(bitmap.width * scale);
+    const height = Math.round(bitmap.height * scale);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close?.();
+
+    const blob = await new Promise<Blob | null>((res) =>
+      canvas.toBlob(res, "image/jpeg", 0.82)
+    );
+    if (!blob || blob.size >= file.size) return file; // keep original if no gain
+    const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+    return new File([blob], name, { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+}
+
 function Composer({
   dayKey,
   dayLabel,
@@ -79,7 +111,8 @@ function Composer({
     try {
       urls = await Promise.all(
         items.map(async (it) => {
-          const blob = await upload(it.file.name, it.file, {
+          const optimized = await compressImage(it.file);
+          const blob = await upload(optimized.name, optimized, {
             access: "public",
             handleUploadUrl: "/api/upload",
           });
@@ -178,7 +211,7 @@ function Composer({
           disabled={busy}
           className={`card-pop-sm w-full rounded-2xl bg-${color} py-3 font-display text-lg font-bold text-ink disabled:opacity-50`}
         >
-          {uploading ? "Uploading photos…" : pending ? "Posting…" : "Post it"}
+          {uploading ? "Optimizing & uploading…" : pending ? "Posting…" : "Post it"}
         </button>
       </div>
     </div>
