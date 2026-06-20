@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// Security: pinned to Next 15.5.x (see package.json) — patched build.
 const nextConfig = {
   images: {
     remotePatterns: [
