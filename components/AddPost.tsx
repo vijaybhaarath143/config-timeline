@@ -112,7 +112,14 @@ function Composer({
       urls = await Promise.all(
         items.map(async (it) => {
           const optimized = await compressImage(it.file);
-          const blob = await upload(optimized.name, optimized, {
+          // Sanitize the pathname: spaces / special chars (e.g. WhatsApp
+          // filenames like "WhatsApp Image 2026-06-19 at 18.44.58.jpg") break
+          // the upload token's pathname signature and 400 the PUT. A random
+          // suffix is added server-side, so a clean name is all we need.
+          const safeName =
+            optimized.name.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") ||
+            "photo.jpg";
+          const blob = await upload(safeName, optimized, {
             access: "public",
             handleUploadUrl: "/api/upload",
           });
