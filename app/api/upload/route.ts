@@ -19,6 +19,9 @@ export async function POST(request: Request): Promise<NextResponse> {
         return {
           allowedContentTypes: ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic"],
           maximumSizeInBytes: 15 * 1024 * 1024, // 15 MB per image
+          // @vercel/blob v2 defaults this to false; keep unique names so two
+          // people uploading "IMG_0001.jpg" never collide or overwrite.
+          addRandomSuffix: true,
           tokenPayload: JSON.stringify({ userId: session.user.id }),
         };
       },
