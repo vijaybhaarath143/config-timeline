@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: #fff7ed;
+  color: #0b0b0f;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Playful multi-colour gradient field behind everything */
+.bg-confetti {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient(40rem 40rem at 8% -10%, rgba(255, 83, 194, 0.35), transparent 60%),
+    radial-gradient(36rem 36rem at 100% 0%, rgba(24, 160, 251, 0.35), transparent 60%),
+    radial-gradient(34rem 34rem at 0% 100%, rgba(18, 201, 90, 0.32), transparent 60%),
+    radial-gradient(40rem 40rem at 100% 100%, rgba(151, 71, 255, 0.30), transparent 60%),
+    #fff7ed;
+}
+
+.bg-confetti span {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(2px);
+  opacity: 0.5;
+}
+
+/* Chunky text outline used on the hero */
+.text-stroke {
+  -webkit-text-stroke: 2px #0b0b0f;
+  color: transparent;
+}
+
+/* Thick playful card border + offset shadow */
+.card-pop {
+  border: 3px solid #0b0b0f;
+  box-shadow: 0 8px 0 0 #0b0b0f;
+}
+
+.card-pop-sm {
+  border: 2px solid #0b0b0f;
+  box-shadow: 0 4px 0 0 #0b0b0f;
+}
+
+/* Hide scrollbar on horizontal day rail but keep scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
