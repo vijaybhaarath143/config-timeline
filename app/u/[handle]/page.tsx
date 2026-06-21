@@ -24,8 +24,9 @@ export async function generateMetadata({
     where: { handle },
     select: { name: true, bio: true, isPublic: true },
   });
+  if (!user) notFound(); // ensures a real 404 status, not a soft 200
   // Don't leak names of private profiles in link previews.
-  if (!user || !user.isPublic) return { title: "Config Timeline" };
+  if (!user.isPublic) return { title: "Config Timeline" };
   return {
     title: `${user.name} · Config Timeline`,
     description: user.bio || `${user.name}'s hour-by-hour Config timeline.`,
