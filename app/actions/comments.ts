@@ -8,7 +8,6 @@ import { isEventOpen } from "@/lib/event";
 export async function addComment(postId: string, body: string) {
   const session = await auth();
   if (!session?.user) return { error: "Please sign in to comment." };
-  if (session.user.status === "BANNED") return { error: "Your account has been removed." };
   if (!isEventOpen()) return { error: "Config has wrapped — comments are closed." };
 
   const text = body.trim();

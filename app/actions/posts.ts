@@ -15,7 +15,7 @@ type CreatePostInput = {
 export async function createPost(input: CreatePostInput) {
   const session = await auth();
   if (!session?.user) return { error: "Please sign in to post." };
-  if (session.user.status === "BANNED") return { error: "Your account has been removed." };
+  if (!session.user.handle) return { error: "Create your profile first." };
   if (!isEventOpen()) return { error: "Config has wrapped — the timeline is now read-only." };
   if (!isValidDayKey(input.day)) return { error: "That day isn't part of Config." };
 
@@ -33,24 +33,21 @@ export async function createPost(input: CreatePostInput) {
     return { error: "Pick a valid time of day." };
   }
 
-  // Held for review unless the author has been approved.
-  const status = session.user.status === "APPROVED" ? "VISIBLE" : "PENDING";
-
   await prisma.post.create({
     data: {
       authorId: session.user.id,
       day: input.day,
       happenedAt,
       caption,
-      status,
+      status: "VISIBLE",
       images: {
         create: images.map((url, i) => ({ url, order: i })),
       },
     },
   });
 
-  revalidatePath("/");
-  return { ok: true, held: status === "PENDING" };
+  if (session.user.handle) revalidatePath(`/u/${session.user.handle}`);
+  return { ok: true };
 }
 
 export async function deletePost(postId: string) {
@@ -65,6 +62,6 @@ export async function deletePost(postId: string) {
   if (!isOwner && !isAdmin) return { error: "You can only delete your own posts." };
 
   await prisma.post.delete({ where: { id: postId } });
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true };
 }

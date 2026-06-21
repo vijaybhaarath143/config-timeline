@@ -13,7 +13,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       request,
       onBeforeGenerateToken: async () => {
         const session = await auth();
-        if (!session?.user || session.user.status === "BANNED") {
+        if (!session?.user || !session.user.handle) {
           throw new Error("Not authorized to upload.");
         }
         return {

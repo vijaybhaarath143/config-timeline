@@ -137,9 +137,6 @@ function Composer({
       const res = await createPost({ day: dayKey, time, caption, imageUrls: urls });
       if (res?.error) {
         setError(res.error);
-      } else if (res?.held) {
-        alert("Posted! Your first post is held for review — it'll appear once you're approved.");
-        onClose();
       } else {
         onClose();
       }

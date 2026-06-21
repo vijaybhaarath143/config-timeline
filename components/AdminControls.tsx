@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { approveUser, banUser, deleteUser, setPostHidden } from "@/app/actions/admin";
+import { deleteUser, setPostHidden } from "@/app/actions/admin";
 
 function Btn({
   onClick,
@@ -29,37 +29,16 @@ function Btn({
   );
 }
 
-export function UserActions({
-  userId,
-  status,
-  isSelf,
-}: {
-  userId: string;
-  status: "PENDING" | "APPROVED" | "BANNED";
-  isSelf: boolean;
-}) {
+export function UserActions({ userId, isSelf }: { userId: string; isSelf: boolean }) {
+  if (isSelf) return <span className="text-xs font-semibold text-ink/40">you</span>;
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {status !== "APPROVED" && (
-        <Btn onClick={() => approveUser(userId)} className="bg-figgreen text-ink">
-          Approve
-        </Btn>
-      )}
-      {status !== "BANNED" && !isSelf && (
-        <Btn onClick={() => banUser(userId)} className="bg-figorange text-ink" confirm="Ban this user and hide their content?">
-          Ban
-        </Btn>
-      )}
-      {!isSelf && (
-        <Btn
-          onClick={() => deleteUser(userId)}
-          className="bg-figred text-white"
-          confirm="Permanently delete this user and ALL their posts & comments? This cannot be undone."
-        >
-          Delete
-        </Btn>
-      )}
-    </div>
+    <Btn
+      onClick={() => deleteUser(userId)}
+      className="bg-figred text-white"
+      confirm="Permanently delete this person and ALL their posts & comments? This cannot be undone."
+    >
+      Delete
+    </Btn>
   );
 }
 

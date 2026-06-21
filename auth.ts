@@ -8,7 +8,8 @@ declare module "next-auth" {
     user: {
       id: string;
       role: "USER" | "ADMIN";
-      status: "PENDING" | "APPROVED" | "BANNED";
+      handle: string | null;
+      isPublic: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -24,14 +25,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     error: "/",
   },
   callbacks: {
-    // Surface role + status onto the session so server components can gate UI.
+    // Surface role + profile fields onto the session so we can route/gate UI.
     async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;
-        // @ts-expect-error -- role/status come from our extended User model
+        // @ts-expect-error -- role/handle/isPublic come from our extended User model
         session.user.role = user.role ?? "USER";
         // @ts-expect-error
-        session.user.status = user.status ?? "PENDING";
+        session.user.handle = user.handle ?? null;
+        // @ts-expect-error
+        session.user.isPublic = user.isPublic ?? true;
       }
       return session;
     },
@@ -42,7 +45,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user.email && user.email.toLowerCase() === ADMIN_EMAIL) {
         await prisma.user.update({
           where: { id: user.id },
-          data: { role: "ADMIN", status: "APPROVED" },
+          data: { role: "ADMIN" },
         });
       }
     },

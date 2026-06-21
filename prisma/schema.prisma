@@ -16,21 +16,18 @@ enum Role {
   ADMIN
 }
 
-enum UserStatus {
-  PENDING   // signed in via Google, not yet approved — their posts are held
-  APPROVED  // can post freely; posts are visible immediately
-  BANNED    // removed by admin; cannot post or comment
-}
-
 model User {
-  id            String     @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String?    @unique
+  email         String?   @unique
   emailVerified DateTime?
   image         String?
-  role          Role       @default(USER)
-  status        UserStatus @default(PENDING)
-  createdAt     DateTime   @default(now())
+  role          Role      @default(USER)
+  // Profile fields — set during onboarding
+  handle        String?   @unique // URL slug, e.g. "vishal-kumar" -> /u/vishal-kumar
+  bio           String?   @db.Text
+  isPublic      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
 
   accounts Account[]
   sessions Session[]
@@ -78,9 +75,8 @@ model VerificationToken {
 // ---------------------------------------------------------------------------
 
 enum PostStatus {
-  PENDING // author not yet approved — held from public timeline
   VISIBLE
-  HIDDEN  // removed by admin
+  HIDDEN // removed by admin
 }
 
 model Post {
