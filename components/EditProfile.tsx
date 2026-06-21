@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 import { updateProfile } from "@/app/actions/profile";
@@ -39,12 +39,26 @@ function Modal({ name, bio, isPublic, image, onClose }: Props & { onClose: () =>
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const objUrlRef = useRef<string | null>(null);
+
+  // Close on Escape; revoke the object-URL preview on unmount.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      if (objUrlRef.current) URL.revokeObjectURL(objUrlRef.current);
+    };
+  }, [onClose]);
 
   function pick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (f) {
+      if (objUrlRef.current) URL.revokeObjectURL(objUrlRef.current);
+      const url = URL.createObjectURL(f);
+      objUrlRef.current = url;
       setPhoto(f);
-      setPreview(URL.createObjectURL(f));
+      setPreview(url);
     }
     e.target.value = "";
   }

@@ -93,6 +93,7 @@ model Post {
   comments Comment[]
 
   @@index([day, status])
+  @@index([authorId, happenedAt]) // profile timeline query
 }
 
 model Image {

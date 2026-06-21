@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isEventOpen, isValidDayKey } from "@/lib/event";
+import { rateLimit } from "@/lib/rate-limit";
+import { isBlobUrl } from "@/lib/blob-url";
+
+const MAX_CAPTION = 2000;
 
 type CreatePostInput = {
   day: string; // "2026-06-19"
@@ -18,11 +22,18 @@ export async function createPost(input: CreatePostInput) {
   if (!session.user.handle) return { error: "Create your profile first." };
   if (!isEventOpen()) return { error: "Config has wrapped — the timeline is now read-only." };
   if (!isValidDayKey(input.day)) return { error: "That day isn't part of Config." };
+  if (!rateLimit(`post:${session.user.id}`, 20, 60_000)) {
+    return { error: "You're posting too fast — take a breath and try again." };
+  }
 
   const caption = input.caption.trim();
-  const images = input.imageUrls.filter(Boolean).slice(0, 10);
+  // Only accept our own Blob URLs — never store arbitrary client-supplied URLs.
+  const images = input.imageUrls.filter(isBlobUrl).slice(0, 10);
   if (!caption && images.length === 0) {
     return { error: "Add a photo or a thought before posting." };
+  }
+  if (caption.length > MAX_CAPTION) {
+    return { error: `Keep it under ${MAX_CAPTION} characters.` };
   }
   if (!/^\d{2}:\d{2}$/.test(input.time)) {
     return { error: "Pick a valid time of day." };
@@ -53,6 +64,7 @@ export async function createPost(input: CreatePostInput) {
 export async function editPost(postId: string, input: { caption: string; time: string }) {
   const session = await auth();
   if (!session?.user) return { error: "Please sign in." };
+  if (!isEventOpen()) return { error: "Config has wrapped — the timeline is now read-only." };
 
   const post = await prisma.post.findUnique({ where: { id: postId }, include: { images: true } });
   if (!post) return { error: "Post not found." };
@@ -62,6 +74,7 @@ export async function editPost(postId: string, input: { caption: string; time: s
   if (!caption && post.images.length === 0) {
     return { error: "A post needs a photo or a thought." };
   }
+  if (caption.length > MAX_CAPTION) return { error: `Keep it under ${MAX_CAPTION} characters.` };
   if (!/^\d{2}:\d{2}$/.test(input.time)) return { error: "Pick a valid time of day." };
 
   const happenedAt = new Date(`${post.day}T${input.time}:00`);

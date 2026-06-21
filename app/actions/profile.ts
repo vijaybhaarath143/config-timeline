@@ -2,8 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
+import { isBlobUrl } from "@/lib/blob-url";
 
 function slugify(name: string): string {
   return name
@@ -38,22 +41,40 @@ export async function createProfile(input: {
 }) {
   const session = await auth();
   if (!session?.user) return { error: "Please sign in." };
+  if (!rateLimit(`profile:${session.user.id}`, 10, 60_000)) {
+    return { error: "Too many attempts — try again shortly." };
+  }
 
   const name = input.name.trim();
   if (!name) return { error: "Please add your name." };
   if (name.length > 60) return { error: "Name is too long." };
 
-  const handle = await uniqueHandle(name, session.user.id);
+  const bio = input.bio.trim().slice(0, 280);
+  let handle = await uniqueHandle(name, session.user.id);
 
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: {
-      name,
-      bio: input.bio.trim().slice(0, 280),
-      isPublic: input.isPublic,
-      handle,
-    },
-  });
+  // Retry on a handle collision race (two signups slugging to the same name).
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { name, bio, isPublic: input.isPublic, handle },
+      });
+      break;
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === "P2002" &&
+        attempt < 4
+      ) {
+        handle = await uniqueHandle(name, session.user.id);
+        continue;
+      }
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        return { error: "Couldn't pick a unique handle — try a slightly different name." };
+      }
+      throw e;
+    }
+  }
 
   revalidatePath("/", "layout");
   redirect(`/u/${handle}`);
@@ -70,6 +91,7 @@ export async function updateProfile(input: {
 
   const name = input.name?.trim();
   if (input.name !== undefined && !name) return { error: "Name can't be empty." };
+  if (input.image && !isBlobUrl(input.image)) return { error: "Invalid image." };
 
   const updated = await prisma.user.update({
     where: { id: session.user.id },

@@ -12,6 +12,7 @@ const display = Space_Grotesk({
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://config-timeline.vercel.app"),
   title: "Config Timeline — SF",
   description: "What happened, hour by hour, at Config. Snap it, share it, scroll the days.",
 };

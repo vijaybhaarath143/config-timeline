@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +12,24 @@ import type { PostView } from "@/components/types";
 
 function timeValueOf(d: Date): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ handle: string }>;
+}): Promise<Metadata> {
+  const { handle } = await params;
+  const user = await prisma.user.findUnique({
+    where: { handle },
+    select: { name: true, bio: true, isPublic: true },
+  });
+  // Don't leak names of private profiles in link previews.
+  if (!user || !user.isPublic) return { title: "Config Timeline" };
+  return {
+    title: `${user.name} · Config Timeline`,
+    description: user.bio || `${user.name}'s hour-by-hour Config timeline.`,
+  };
 }
 
 export const dynamic = "force-dynamic";
@@ -41,7 +60,7 @@ export default async function ProfilePage({
         <div className="mx-auto max-w-md px-4 py-24 text-center">
           <div className="text-5xl">🔒</div>
           <h1 className="mt-3 font-display text-2xl font-bold">This profile is private</h1>
-          <p className="mt-2 text-ink/60">{user.name ?? "This person"} has kept their Config timeline to themselves.</p>
+          <p className="mt-2 text-ink/60">This Config timeline is kept private by its owner.</p>
         </div>
       </div>
     );
@@ -68,7 +87,6 @@ export default async function ProfilePage({
       timeValue: timeValueOf(p.happenedAt),
       authorName: user.name ?? "Someone",
       authorImage: user.image,
-      held: false,
       images: p.images.map((i) => ({ id: i.id, url: i.url })),
       canDelete: isOwner || isAdmin,
       canEdit: isOwner,
@@ -80,7 +98,8 @@ export default async function ProfilePage({
         authorImage: c.author.image,
         edited: c.updatedAt.getTime() - c.createdAt.getTime() > 1000,
         mine: c.authorId === viewer?.id,
-        canDelete: c.authorId === viewer?.id || isAdmin,
+        // owner moderates comments on their own profile; admins anywhere
+        canDelete: c.authorId === viewer?.id || isAdmin || isOwner,
       })),
     };
     const list = byDay.get(p.day) ?? [];

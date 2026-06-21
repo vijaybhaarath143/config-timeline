@@ -33,7 +33,7 @@ export function PostCard({
   }
 
   return (
-    <article className={`card-pop relative rounded-4xl bg-white p-4 ${post.held ? "ring-4 ring-figyellow/60" : ""}`}>
+    <article className="card-pop relative rounded-4xl bg-white p-4">
       {/* time bubble on the spine side */}
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">

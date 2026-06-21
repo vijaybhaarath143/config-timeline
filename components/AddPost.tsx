@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { upload } from "@vercel/blob/client";
 import { createPost } from "@/app/actions/posts";
 import { compressImage, safeUploadName } from "@/lib/image";
@@ -55,6 +55,18 @@ function Composer({
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
+  const itemsRef = useRef<Selected[]>([]);
+  itemsRef.current = items;
+
+  // Close on Escape, and revoke any object-URL previews on unmount.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      itemsRef.current.forEach((it) => URL.revokeObjectURL(it.preview));
+    };
+  }, [onClose]);
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []).slice(0, 10 - items.length);
@@ -66,7 +78,10 @@ function Composer({
   }
 
   function remove(idx: number) {
-    setItems((prev) => prev.filter((_, i) => i !== idx));
+    setItems((prev) => {
+      URL.revokeObjectURL(prev[idx]?.preview);
+      return prev.filter((_, i) => i !== idx);
+    });
   }
 
   async function post() {

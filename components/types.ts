@@ -16,7 +16,6 @@ export type PostView = {
   timeValue: string; // "07:30" (for the edit input)
   authorName: string;
   authorImage: string | null;
-  held: boolean;
   images: { id: string; url: string }[];
   comments: CommentView[];
   canDelete: boolean;
