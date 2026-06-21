@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { after } from "next/server";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -82,6 +83,16 @@ export default async function ProfilePage({
     },
   });
 
+  // Count this as a view (after the response, so it never blocks render) —
+  // but don't count the owner looking at their own profile.
+  if (!isOwner) {
+    after(async () => {
+      await prisma.user
+        .update({ where: { id: user.id }, data: { views: { increment: 1 } } })
+        .catch(() => {});
+    });
+  }
+
   const byDay = new Map<string, PostView[]>();
   for (const p of rows) {
     const view: PostView = {
@@ -143,7 +154,8 @@ export default async function ProfilePage({
           <h1 className="mt-3 break-words font-display text-4xl font-bold tracking-tight">{user.name}</h1>
           {user.bio && <p className="mx-auto mt-2 max-w-md text-ink/70">{user.bio}</p>}
           <p className="mt-1 text-sm font-semibold text-ink/40">
-            {total} {total === 1 ? "moment" : "moments"} · Config {new Date().getFullYear()}
+            {total} {total === 1 ? "moment" : "moments"} · 👀 {user.views.toLocaleString()}{" "}
+            {user.views === 1 ? "view" : "views"}
           </p>
 
           <div className="mt-4 flex items-center justify-center gap-2">

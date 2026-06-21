@@ -27,6 +27,7 @@ model User {
   handle        String?   @unique // URL slug, e.g. "vishal-kumar" -> /u/vishal-kumar
   bio           String?   @db.Text
   isPublic      Boolean   @default(true)
+  views         Int       @default(0) // total profile page views (excludes owner)
   createdAt     DateTime  @default(now())
 
   accounts Account[]
