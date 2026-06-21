@@ -4,7 +4,7 @@ import type { EventDay } from "@/lib/event";
 
 export function DayRail({ days, counts }: { days: EventDay[]; counts: Record<string, number> }) {
   return (
-    <nav className="no-scrollbar sticky top-[57px] z-20 -mx-4 flex gap-2 overflow-x-auto border-b-2 border-ink/10 bg-figyellow/80 px-4 py-2 backdrop-blur">
+    <nav className="no-scrollbar sticky top-[52px] z-20 -mx-4 flex gap-2 overflow-x-auto border-b-2 border-ink/10 bg-figyellow/80 px-4 py-2 backdrop-blur sm:top-[60px]">
       {days.map((d) => (
         <a
           key={d.key}

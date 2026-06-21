@@ -28,12 +28,12 @@ export function Landing() {
 
       <button
         onClick={() => signIn("google")}
-        className="card-pop mt-8 rounded-2xl bg-ink px-7 py-4 font-display text-lg font-bold text-white transition active:translate-y-1"
+        className="card-pop mt-8 max-w-full rounded-2xl bg-ink px-5 py-3.5 font-display text-base font-bold text-white transition active:translate-y-1 sm:px-7 sm:py-4 sm:text-lg"
       >
         Sign in to add your Config experience →
       </button>
 
-      <div className="mt-12 grid w-full max-w-md grid-cols-3 gap-3 text-left">
+      <div className="mt-12 grid w-full max-w-md grid-cols-1 gap-3 text-left sm:grid-cols-3">
         <Feature color="figpink" emoji="📸" label="Post photos & thoughts with a timestamp" />
         <Feature color="figblue" emoji="🗓️" label="A timeline for each day, 19→26" />
         <Feature color="figgreen" emoji="🔒" label="Keep it public or private — your call" />
