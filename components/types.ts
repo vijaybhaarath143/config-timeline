@@ -18,6 +18,8 @@ export type PostView = {
   authorImage: string | null;
   images: { id: string; url: string }[];
   comments: CommentView[];
+  loveCount: number;
+  lovedByMe: boolean;
   canDelete: boolean;
   canEdit: boolean; // owner only
 };

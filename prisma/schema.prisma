@@ -33,6 +33,7 @@ model User {
   sessions Session[]
   posts    Post[]
   comments Comment[]
+  loves    Love[]
 }
 
 model Account {
@@ -91,9 +92,23 @@ model Post {
   author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   images   Image[]
   comments Comment[]
+  loves    Love[]
 
   @@index([day, status])
   @@index([authorId, happenedAt]) // profile timeline query
+}
+
+model Love {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId]) // one love per person per post
+  @@index([postId])
 }
 
 model Image {

@@ -76,6 +76,9 @@ export default async function ProfilePage({
     include: {
       images: { orderBy: { order: "asc" } },
       comments: { orderBy: { createdAt: "asc" }, include: { author: true } },
+      _count: { select: { loves: true } },
+      // only the viewer's own love row (empty for signed-out) → drives lovedByMe
+      loves: { where: { userId: viewer?.id ?? "__none__" }, select: { id: true } },
     },
   });
 
@@ -89,6 +92,8 @@ export default async function ProfilePage({
       authorName: user.name ?? "Someone",
       authorImage: user.image,
       images: p.images.map((i) => ({ id: i.id, url: i.url })),
+      loveCount: p._count.loves,
+      lovedByMe: p.loves.length > 0,
       canDelete: isOwner || isAdmin,
       canEdit: isOwner,
       comments: p.comments.map((c) => ({

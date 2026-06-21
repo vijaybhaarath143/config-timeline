@@ -39,9 +39,11 @@ export function Header({ user }: Props) {
             <div className="flex items-center gap-2">
               <Link
                 href={user.handle ? `/u/${user.handle}` : "/onboarding"}
-                className="card-pop-sm rounded-xl bg-white px-3 py-1.5 text-sm font-semibold"
+                className={`card-pop-sm rounded-xl px-3 py-1.5 text-sm font-semibold ${
+                  user.handle ? "bg-white" : "bg-figgreen"
+                }`}
               >
-                My profile
+                {user.handle ? "My profile" : "+ Create profile"}
               </Link>
               {user.image && (
                 // eslint-disable-next-line @next/next/no-img-element

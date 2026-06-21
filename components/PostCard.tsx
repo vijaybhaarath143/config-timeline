@@ -5,6 +5,7 @@ import type { PostView } from "./types";
 import { Gallery } from "./Gallery";
 import { Comments } from "./Comments";
 import { deletePost, editPost } from "@/app/actions/posts";
+import { toggleLove } from "@/app/actions/loves";
 
 export function PostCard({
   post,
@@ -21,7 +22,24 @@ export function PostCard({
   const [time, setTime] = useState(post.timeValue);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const [loved, setLoved] = useState(post.lovedByMe);
+  const [loveCount, setLoveCount] = useState(post.loveCount);
+  const [, startLove] = useTransition();
   const imgs = post.images;
+
+  function toggleLoveClick() {
+    if (!canInteract) return;
+    const next = !loved;
+    setLoved(next);
+    setLoveCount((c) => c + (next ? 1 : -1));
+    startLove(async () => {
+      const r = await toggleLove(post.id);
+      if (r?.error) {
+        setLoved(!next);
+        setLoveCount((c) => c + (next ? -1 : 1));
+      }
+    });
+  }
 
   function saveEdit() {
     setError(null);
@@ -145,6 +163,26 @@ export function PostCard({
           })}
         </div>
       )}
+
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          onClick={toggleLoveClick}
+          disabled={!canInteract}
+          aria-label={loved ? "Remove love" : "Love this"}
+          title={canInteract ? "" : "Sign in to love"}
+          className={`flex items-center gap-1.5 rounded-full border-2 border-ink px-3 py-1 text-sm font-bold transition active:translate-y-0.5 ${
+            loved ? "bg-figpink text-white" : "bg-white"
+          } ${canInteract ? "" : "cursor-default opacity-80"}`}
+        >
+          <span className="text-base leading-none">{loved ? "❤️" : "🤍"}</span>
+          <span>{loveCount}</span>
+        </button>
+        {loveCount > 0 && (
+          <span className="text-xs font-semibold text-ink/40">
+            {loveCount === 1 ? "1 love" : `${loveCount} loves`}
+          </span>
+        )}
+      </div>
 
       <Comments postId={post.id} comments={post.comments} canInteract={canInteract} />
 
