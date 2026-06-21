@@ -6,6 +6,9 @@ import { Gallery } from "./Gallery";
 import { Comments } from "./Comments";
 import { deletePost, editPost } from "@/app/actions/posts";
 import { toggleLove } from "@/app/actions/loves";
+import { getEventDays } from "@/lib/event";
+
+const EVENT_DAYS = getEventDays();
 
 export function PostCard({
   post,
@@ -20,6 +23,7 @@ export function PostCard({
   const [editing, setEditing] = useState(false);
   const [caption, setCaption] = useState(post.caption);
   const [time, setTime] = useState(post.timeValue);
+  const [day, setDay] = useState(post.day);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const [loved, setLoved] = useState(post.lovedByMe);
@@ -44,7 +48,7 @@ export function PostCard({
   function saveEdit() {
     setError(null);
     start(async () => {
-      const res = await editPost(post.id, { caption, time });
+      const res = await editPost(post.id, { caption, time, day });
       if (res?.error) setError(res.error);
       else setEditing(false);
     });
@@ -92,7 +96,19 @@ export function PostCard({
 
       {editing ? (
         <div className="mb-3 space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wide text-ink/50">Day</span>
+            <select
+              value={day}
+              onChange={(e) => setDay(e.target.value)}
+              className="rounded-lg border-2 border-ink px-2 py-1 font-display font-semibold"
+            >
+              {EVENT_DAYS.map((d) => (
+                <option key={d.key} value={d.key}>
+                  {d.weekday} {d.dayNum}
+                </option>
+              ))}
+            </select>
             <span className="text-xs font-bold uppercase tracking-wide text-ink/50">Time</span>
             <input
               type="time"
@@ -121,6 +137,7 @@ export function PostCard({
                 setEditing(false);
                 setCaption(post.caption);
                 setTime(post.timeValue);
+                setDay(post.day);
                 setError(null);
               }}
               className="rounded-xl px-3 py-1.5 text-sm font-semibold text-ink/50"

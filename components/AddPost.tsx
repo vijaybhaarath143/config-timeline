@@ -4,6 +4,9 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { upload } from "@vercel/blob/client";
 import { createPost } from "@/app/actions/posts";
 import { compressImage, safeUploadName } from "@/lib/image";
+import { getEventDays } from "@/lib/event";
+
+const EVENT_DAYS = getEventDays();
 
 type Selected = { file: File; preview: string; url?: string };
 
@@ -49,6 +52,7 @@ function Composer({
   onClose: () => void;
 }) {
   const [items, setItems] = useState<Selected[]>([]);
+  const [day, setDay] = useState(dayKey);
   const [time, setTime] = useState(nowTimeValue());
   const [caption, setCaption] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -111,7 +115,7 @@ function Composer({
     setUploading(false);
 
     start(async () => {
-      const res = await createPost({ day: dayKey, time, caption, imageUrls: urls });
+      const res = await createPost({ day, time, caption, imageUrls: urls });
       if (res?.error) {
         setError(res.error);
       } else {
@@ -130,23 +134,36 @@ function Composer({
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-xl font-bold">
-            New post · <span className={`text-${color}`}>{dayLabel}</span>
+            New post
           </h2>
           <button onClick={onClose} className="text-2xl leading-none text-ink/40 hover:text-ink">
             ✕
           </button>
         </div>
 
-        {/* time */}
+        {/* day + time */}
         <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink/50">
           When did this happen?
         </label>
-        <input
-          type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          className="mb-4 rounded-xl border-2 border-ink px-3 py-2 font-display text-lg font-semibold"
-        />
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <select
+            value={day}
+            onChange={(e) => setDay(e.target.value)}
+            className="rounded-xl border-2 border-ink px-3 py-2 font-display text-lg font-semibold"
+          >
+            {EVENT_DAYS.map((d) => (
+              <option key={d.key} value={d.key}>
+                {d.weekday} {d.dayNum}
+              </option>
+            ))}
+          </select>
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className="rounded-xl border-2 border-ink px-3 py-2 font-display text-lg font-semibold"
+          />
+        </div>
 
         {/* photos */}
         {items.length > 0 && (

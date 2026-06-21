@@ -61,7 +61,10 @@ export async function createPost(input: CreatePostInput) {
   return { ok: true };
 }
 
-export async function editPost(postId: string, input: { caption: string; time: string }) {
+export async function editPost(
+  postId: string,
+  input: { caption: string; time: string; day: string }
+) {
   const session = await auth();
   if (!session?.user) return { error: "Please sign in." };
   if (!isEventOpen()) return { error: "Config has wrapped — the timeline is now read-only." };
@@ -75,14 +78,15 @@ export async function editPost(postId: string, input: { caption: string; time: s
     return { error: "A post needs a photo or a thought." };
   }
   if (caption.length > MAX_CAPTION) return { error: `Keep it under ${MAX_CAPTION} characters.` };
+  if (!isValidDayKey(input.day)) return { error: "That day isn't part of Config." };
   if (!/^\d{2}:\d{2}$/.test(input.time)) return { error: "Pick a valid time of day." };
 
-  const happenedAt = new Date(`${post.day}T${input.time}:00`);
+  const happenedAt = new Date(`${input.day}T${input.time}:00`);
   if (Number.isNaN(happenedAt.getTime())) return { error: "Pick a valid time of day." };
 
   await prisma.post.update({
     where: { id: postId },
-    data: { caption, happenedAt },
+    data: { caption, day: input.day, happenedAt },
   });
 
   if (session.user.handle) revalidatePath(`/u/${session.user.handle}`);

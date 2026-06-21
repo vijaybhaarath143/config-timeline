@@ -87,6 +87,7 @@ export default async function ProfilePage({
     const view: PostView = {
       id: p.id,
       caption: p.caption,
+      day: p.day,
       timeLabel: timeLabel(p.happenedAt),
       timeValue: timeValueOf(p.happenedAt),
       authorName: user.name ?? "Someone",
@@ -186,8 +187,13 @@ export default async function ProfilePage({
                       {d.dayNum}
                     </span>
                     <div className="flex-1">
-                      <h2 className="font-display text-2xl font-bold leading-none">
+                      <h2 className="flex items-center gap-2 font-display text-2xl font-bold leading-none">
                         {d.weekday} {d.dayNum}
+                        {d.key === tKey && (
+                          <span className="rounded-full border-2 border-ink bg-ink px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-figyellow">
+                            Today
+                          </span>
+                        )}
                       </h2>
                       <p className="text-xs font-semibold text-ink/50">
                         {posts.length} {posts.length === 1 ? "moment" : "moments"}
