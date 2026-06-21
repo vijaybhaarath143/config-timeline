@@ -54,19 +54,19 @@ export function PostCard({
     <article className="card-pop relative rounded-4xl bg-white p-4">
       {/* time bubble on the spine side */}
       <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={post.authorImage ?? "/avatar.svg"}
             alt=""
-            className="h-9 w-9 rounded-full border-2 border-ink object-cover"
+            className="h-9 w-9 shrink-0 rounded-full border-2 border-ink object-cover"
           />
-          <div className="leading-tight">
-            <div className="text-sm font-bold">{post.authorName}</div>
+          <div className="min-w-0 leading-tight">
+            <div className="truncate text-sm font-bold">{post.authorName}</div>
             <div className={`text-xs font-semibold text-${accent}`}>{post.timeLabel}</div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3">
           {post.canEdit && !editing && (
             <button
               onClick={() => setEditing(true)}

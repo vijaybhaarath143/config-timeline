@@ -45,12 +45,12 @@ export default async function AdminPage() {
       <Section title={`People (${users.length})`} accent="figgreen">
         <ul className="space-y-2">
           {users.map((u) => (
-            <li key={u.id} className="flex items-center justify-between gap-3 rounded-2xl border-2 border-ink bg-white p-3">
-              <div className="flex items-center gap-3">
+            <li key={u.id} className="flex items-center justify-between gap-2 rounded-2xl border-2 border-ink bg-white p-3">
+              <div className="flex min-w-0 items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={u.image ?? "/avatar.svg"} alt="" className="h-10 w-10 rounded-full border-2 border-ink object-cover" />
-                <div className="leading-tight">
-                  <div className="flex items-center gap-2 text-sm font-bold">
+                <img src={u.image ?? "/avatar.svg"} alt="" className="h-10 w-10 shrink-0 rounded-full border-2 border-ink object-cover" />
+                <div className="min-w-0 leading-tight">
+                  <div className="flex flex-wrap items-center gap-1.5 text-sm font-bold">
                     {u.handle ? (
                       <Link href={`/u/${u.handle}`} className="underline decoration-figpink decoration-2 underline-offset-2">
                         {u.name ?? "—"}
@@ -65,10 +65,12 @@ export default async function AdminPage() {
                       {u.handle ? (u.isPublic ? "public" : "private") : "no profile"}
                     </span>
                   </div>
-                  <div className="text-xs text-ink/50">{u.email} · {u._count.posts} post(s)</div>
+                  <div className="truncate text-xs text-ink/50">{u.email} · {u._count.posts} post(s)</div>
                 </div>
               </div>
-              <UserActions userId={u.id} isSelf={u.id === me.id} />
+              <div className="shrink-0">
+                <UserActions userId={u.id} isSelf={u.id === me.id} />
+              </div>
             </li>
           ))}
         </ul>
@@ -80,12 +82,14 @@ export default async function AdminPage() {
         ) : (
           <ul className="space-y-2">
             {hiddenPosts.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-3 rounded-2xl border-2 border-ink bg-white p-3">
-                <div className="min-w-0">
-                  <div className="text-sm font-bold">{p.author.name ?? p.author.email}</div>
+              <li key={p.id} className="flex items-center justify-between gap-2 rounded-2xl border-2 border-ink bg-white p-3">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-bold">{p.author.name ?? p.author.email}</div>
                   <div className="truncate text-sm text-ink/70">{p.caption || "(no caption)"}</div>
                 </div>
-                <PostModeration postId={p.id} hidden />
+                <div className="shrink-0">
+                  <PostModeration postId={p.id} hidden />
+                </div>
               </li>
             ))}
           </ul>

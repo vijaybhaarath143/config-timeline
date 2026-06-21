@@ -139,7 +139,7 @@ export default async function ProfilePage({
             alt=""
             className="mx-auto h-20 w-20 rounded-full border-[3px] border-ink object-cover"
           />
-          <h1 className="mt-3 font-display text-4xl font-bold tracking-tight">{user.name}</h1>
+          <h1 className="mt-3 break-words font-display text-4xl font-bold tracking-tight">{user.name}</h1>
           {user.bio && <p className="mx-auto mt-2 max-w-md text-ink/70">{user.bio}</p>}
           <p className="mt-1 text-sm font-semibold text-ink/40">
             {total} {total === 1 ? "moment" : "moments"} · Config {new Date().getFullYear()}
