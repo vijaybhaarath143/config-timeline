@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import type { PostView } from "./types";
 import { Gallery } from "./Gallery";
 import { Comments } from "./Comments";
-import { deletePost } from "@/app/actions/posts";
+import { deletePost, editPost } from "@/app/actions/posts";
 
 export function PostCard({
   post,
@@ -16,8 +16,21 @@ export function PostCard({
   canInteract: boolean;
 }) {
   const [galleryAt, setGalleryAt] = useState<number | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [caption, setCaption] = useState(post.caption);
+  const [time, setTime] = useState(post.timeValue);
+  const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const imgs = post.images;
+
+  function saveEdit() {
+    setError(null);
+    start(async () => {
+      const res = await editPost(post.id, { caption, time });
+      if (res?.error) setError(res.error);
+      else setEditing(false);
+    });
+  }
 
   return (
     <article className={`card-pop relative rounded-4xl bg-white p-4 ${post.held ? "ring-4 ring-figyellow/60" : ""}`}>
@@ -35,13 +48,17 @@ export function PostCard({
             <div className={`text-xs font-semibold text-${accent}`}>{post.timeLabel}</div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {post.held && (
-            <span className="rounded-full border-2 border-ink bg-figyellow px-2 py-0.5 text-[11px] font-bold">
-              Held for review
-            </span>
+        <div className="flex items-center gap-3">
+          {post.canEdit && !editing && (
+            <button
+              onClick={() => setEditing(true)}
+              disabled={pending}
+              className="text-xs font-semibold text-ink/40 hover:text-figblue"
+            >
+              Edit
+            </button>
           )}
-          {post.canDelete && (
+          {post.canDelete && !editing && (
             <button
               onClick={() => {
                 if (confirm("Delete this post?")) start(async () => void (await deletePost(post.id)));
@@ -55,7 +72,48 @@ export function PostCard({
         </div>
       </div>
 
-      {post.caption && <p className="mb-3 whitespace-pre-wrap text-[15px] leading-snug">{post.caption}</p>}
+      {editing ? (
+        <div className="mb-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wide text-ink/50">Time</span>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="rounded-lg border-2 border-ink px-2 py-1 font-display font-semibold"
+            />
+          </div>
+          <textarea
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            rows={3}
+            className="w-full resize-none rounded-xl border-2 border-ink px-3 py-2 text-[15px] outline-none focus:bg-figyellow/10"
+          />
+          {error && <p className="text-xs font-semibold text-figred">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={saveEdit}
+              disabled={pending}
+              className="card-pop-sm rounded-xl bg-figblue px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50"
+            >
+              {pending ? "Saving…" : "Save"}
+            </button>
+            <button
+              onClick={() => {
+                setEditing(false);
+                setCaption(post.caption);
+                setTime(post.timeValue);
+                setError(null);
+              }}
+              className="rounded-xl px-3 py-1.5 text-sm font-semibold text-ink/50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        post.caption && <p className="mb-3 whitespace-pre-wrap text-[15px] leading-snug">{post.caption}</p>
+      )}
 
       {imgs.length > 0 && (
         <div

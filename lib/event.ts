@@ -61,6 +61,16 @@ export function isEventOpen(now: Date = new Date()): boolean {
   return now < EVENT.closesAt;
 }
 
+/** Today's day key in event-local (San Francisco) time, e.g. "2026-06-20". */
+export function todayKey(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
+
 /** Is the given day key part of the event window? */
 export function isValidDayKey(key: string): boolean {
   return getEventDays().some((d) => d.key === key);

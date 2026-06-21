@@ -12,13 +12,15 @@ export type CommentView = {
 export type PostView = {
   id: string;
   caption: string;
-  timeLabel: string; // "7:30 AM"
+  timeLabel: string; // "7:30 AM" (display)
+  timeValue: string; // "07:30" (for the edit input)
   authorName: string;
   authorImage: string | null;
-  held: boolean; // PENDING — visible only to its author
+  held: boolean;
   images: { id: string; url: string }[];
   comments: CommentView[];
   canDelete: boolean;
+  canEdit: boolean; // owner only
 };
 
 export type Viewer = {

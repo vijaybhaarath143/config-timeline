@@ -59,15 +59,29 @@ export async function createProfile(input: {
   redirect(`/u/${handle}`);
 }
 
-export async function updateProfile(input: { bio: string; isPublic: boolean }) {
+export async function updateProfile(input: {
+  name?: string;
+  bio: string;
+  isPublic: boolean;
+  image?: string; // new photo URL, if changed
+}) {
   const session = await auth();
   if (!session?.user) return { error: "Please sign in." };
 
+  const name = input.name?.trim();
+  if (input.name !== undefined && !name) return { error: "Name can't be empty." };
+
   const updated = await prisma.user.update({
     where: { id: session.user.id },
-    data: { bio: input.bio.trim().slice(0, 280), isPublic: input.isPublic },
+    data: {
+      ...(name ? { name: name.slice(0, 60) } : {}),
+      ...(input.image ? { image: input.image } : {}),
+      bio: input.bio.trim().slice(0, 280),
+      isPublic: input.isPublic,
+    },
   });
 
   revalidatePath(`/u/${updated.handle}`);
+  revalidatePath("/", "layout");
   return { ok: true };
 }

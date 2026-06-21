@@ -50,6 +50,32 @@ export async function createPost(input: CreatePostInput) {
   return { ok: true };
 }
 
+export async function editPost(postId: string, input: { caption: string; time: string }) {
+  const session = await auth();
+  if (!session?.user) return { error: "Please sign in." };
+
+  const post = await prisma.post.findUnique({ where: { id: postId }, include: { images: true } });
+  if (!post) return { error: "Post not found." };
+  if (post.authorId !== session.user.id) return { error: "You can only edit your own posts." };
+
+  const caption = input.caption.trim();
+  if (!caption && post.images.length === 0) {
+    return { error: "A post needs a photo or a thought." };
+  }
+  if (!/^\d{2}:\d{2}$/.test(input.time)) return { error: "Pick a valid time of day." };
+
+  const happenedAt = new Date(`${post.day}T${input.time}:00`);
+  if (Number.isNaN(happenedAt.getTime())) return { error: "Pick a valid time of day." };
+
+  await prisma.post.update({
+    where: { id: postId },
+    data: { caption, happenedAt },
+  });
+
+  if (session.user.handle) revalidatePath(`/u/${session.user.handle}`);
+  return { ok: true };
+}
+
 export async function deletePost(postId: string) {
   const session = await auth();
   if (!session?.user) return { error: "Please sign in." };

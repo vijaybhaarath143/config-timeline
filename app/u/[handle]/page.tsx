@@ -1,13 +1,17 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getEventDays, isEventOpen, timeLabel } from "@/lib/event";
+import { getEventDays, isEventOpen, timeLabel, todayKey } from "@/lib/event";
 import { Header } from "@/components/Header";
 import { DayRail } from "@/components/DayRail";
 import { AddPost } from "@/components/AddPost";
 import { PostCard } from "@/components/PostCard";
-import { PrivacyToggle } from "@/components/PrivacyToggle";
+import { EditProfile } from "@/components/EditProfile";
 import type { PostView } from "@/components/types";
+
+function timeValueOf(d: Date): string {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -61,11 +65,13 @@ export default async function ProfilePage({
       id: p.id,
       caption: p.caption,
       timeLabel: timeLabel(p.happenedAt),
+      timeValue: timeValueOf(p.happenedAt),
       authorName: user.name ?? "Someone",
       authorImage: user.image,
       held: false,
       images: p.images.map((i) => ({ id: i.id, url: i.url })),
       canDelete: isOwner || isAdmin,
+      canEdit: isOwner,
       comments: p.comments.map((c) => ({
         id: c.id,
         body: c.body,
@@ -85,6 +91,15 @@ export default async function ProfilePage({
   const counts: Record<string, number> = {};
   for (const d of days) counts[d.key] = byDay.get(d.key)?.length ?? 0;
   const total = rows.length;
+
+  // Auto-hide empty days: visitors see only days with posts; the owner also
+  // sees today→the end of the event so they can keep adding moments.
+  const tKey = todayKey();
+  const visibleDays = days.filter((d) => {
+    if ((byDay.get(d.key)?.length ?? 0) > 0) return true;
+    if (isOwner && eventOpen && d.key >= tKey) return true;
+    return false;
+  });
 
   return (
     <div className="min-h-screen">
@@ -106,12 +121,16 @@ export default async function ProfilePage({
           </p>
 
           <div className="mt-4 flex items-center justify-center gap-2">
-            {isOwner ? (
-              <PrivacyToggle isPublic={user.isPublic} bio={user.bio ?? ""} />
-            ) : (
-              <span className="rounded-full border-2 border-ink bg-white px-3 py-1 text-xs font-bold">
-                {user.isPublic ? "🌍 Public profile" : "🔒 Private"}
-              </span>
+            <span className="rounded-full border-2 border-ink bg-white px-3 py-1 text-xs font-bold">
+              {user.isPublic ? "🌍 Public" : "🔒 Private"}
+            </span>
+            {isOwner && (
+              <EditProfile
+                name={user.name ?? ""}
+                bio={user.bio ?? ""}
+                isPublic={user.isPublic}
+                image={user.image}
+              />
             )}
           </div>
 
@@ -122,13 +141,18 @@ export default async function ProfilePage({
           )}
         </section>
 
-        <DayRail days={days} counts={counts} />
+        {visibleDays.length > 1 && <DayRail days={visibleDays} counts={counts} />}
 
         {/* Timeline */}
+        {visibleDays.length === 0 ? (
+          <div className="mt-6 rounded-3xl border-2 border-dashed border-ink/20 py-16 text-center text-sm font-semibold text-ink/40">
+            {isOwner ? "Your timeline is empty — sign back during Config to add moments." : "No moments to show yet."}
+          </div>
+        ) : (
         <div className="relative mt-6">
           <div className="absolute bottom-0 left-[19px] top-2 w-1 rounded bg-ink/10" aria-hidden />
           <div className="space-y-12">
-            {days.map((d) => {
+            {visibleDays.map((d) => {
               const posts = byDay.get(d.key) ?? [];
               return (
                 <section key={d.key} id={`day-${d.dayNum}`} className="scroll-mt-32">
@@ -165,6 +189,7 @@ export default async function ProfilePage({
             })}
           </div>
         </div>
+        )}
 
         <footer className="mt-16 text-center text-xs font-semibold text-ink/40">
           Config Timeline · be kind, be colourful ✦
