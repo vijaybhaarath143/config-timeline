@@ -129,13 +129,14 @@ export default async function ProfilePage({
   for (const d of days) counts[d.key] = byDay.get(d.key)?.length ?? 0;
   const total = rows.length;
 
-  // Auto-hide empty days: visitors see only days with posts; the owner also
-  // sees today→the end of the event so they can keep adding moments.
-  const tKey = todayKey();
+  // Auto-hide empty days: visitors only ever see days with posts (clean public
+  // view). The owner, while Config is open, sees EVERY day so they can add to —
+  // or backfill — any of them, including days they missed. After the event
+  // closes, even the owner only sees days that have content.
+  const tKey = todayKey(); // for the "Today" badge
   const visibleDays = days.filter((d) => {
-    if ((byDay.get(d.key)?.length ?? 0) > 0) return true;
-    if (isOwner && eventOpen && d.key >= tKey) return true;
-    return false;
+    if (isOwner && eventOpen) return true;
+    return (byDay.get(d.key)?.length ?? 0) > 0;
   });
 
   return (
